@@ -1,10 +1,12 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: Copperplate, fantasy;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
 }
 
 .container {
@@ -13,24 +15,82 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 90vw; /* Set a fixed width for the container to make it wider */
+    max-width: 1200px; /* Ensure the width doesn't exceed a maximum value */
 }
 
 #calendar {
-    max-width: 900px;
+    max-width: 100%; /* Ensure the calendar fits within the container */
     margin: 0 auto;
+    height: calc(100vh - 160px); /* Adjust height to fit within the viewport, considering the header and buttons */
+}
+
+h1 {
+    font-size: 2.5em; /* Increased the font size of the title */
+    margin-bottom: 10px; /* Reduced margin-bottom for closer spacing */
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Reduced space between the buttons */
 }
 
 button {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
+    margin: 5px; /* Reduced margin for closer spacing */
+    padding: 10px 20px; /* Reduced padding for a more compact size */
+    font-size: 20px; /* Increased the font size of the button text */
+    font-family: Copperplate, fantasy; /* Match the button font with the rest of the UI */
     cursor: pointer;
     border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
+    border-radius: 10px;
+    background-color: #d3d3d3; /* Light gray background color */
+    color: #000; /* Black text color */
+    flex: 1; /* Allow buttons to grow and fill space equally */
+    min-width: 150px; /* Minimum width to ensure proper button size */
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #a9a9a9; /* Darker gray background color on hover */
+}
+
+/* Custom styles for FullCalendar days */
+.fc-daygrid-day-number {
+    font-size: 1.2em; /* Decreased the font size of day numbers to fit better */
+}
+
+.fc-daygrid-day {
+    padding: 5px; /* Reduced padding to fit within the viewport */
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.5em; /* Decreased the font size of the month title to fit better */
+}
+
+.fc .fc-toolbar-chunk {
+    flex: 1; /* Evenly distribute space among toolbar chunks */
+    text-align: center; /* Center the toolbar chunks */
+}
+
+.fc .fc-toolbar .fc-left,
+.fc .fc-toolbar .fc-right,
+.fc .fc-toolbar .fc-center {
+    flex: none; /* Ensure chunks don't grow */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fc .fc-toolbar .fc-left,
+.fc .fc-toolbar .fc-right {
+    width: auto;
+    margin: 0 2px; /* Reduced margin for closer spacing */
+}
+
+.fc .fc-toolbar .fc-center {
+    flex: 1;
+}
+
+.fc .fc-daygrid-day-top {
+    font-size: 1em; /* Decreased the font size of the top section of each day cell to fit better */
 }
