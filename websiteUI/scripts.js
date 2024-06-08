@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var container = document.querySelector('.container');
+    var events = loadEvents();
 
     // Initialize the calendar with existing events
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        events: loadEvents(),
+        events: events,
         eventDidMount: function(info) {
             // Create a remove button
             var removeButton = document.createElement('span');
@@ -50,6 +51,12 @@ document.addEventListener('DOMContentLoaded', function() {
         renderAvailabilityPage();
     });
 
+    document.getElementById('adjustPriorityButton').addEventListener('click', function() {
+        renderAdjustPriorityPage();
+    });
+    function reload(){
+        location.reload();
+    }
     // Function to render the availability page
     function renderAvailabilityPage() {
         container.innerHTML = `
@@ -102,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderCalendarPage();
         });
     }
-
+    
     // Function to render the add test page
     function renderAddTestPage() {
         container.innerHTML = `
@@ -140,11 +147,21 @@ document.addEventListener('DOMContentLoaded', function() {
             // Save the test date and subject to localStorage
             var events = loadEvents();
             var eventDate = `${testDate['testYear']}-${String(testDate['testMonth']).padStart(2, '0')}-${String(testDate['testDay']).padStart(2, '0')}`;
-            events.push({ title: `Test: ${testDate['testSubject']}`, start: eventDate });
+
+            // Calculate the priority for the new test
+            var priority = events.length + 1;
+
+            events.push({ title: `Test: ${testDate['testSubject']}`, start: eventDate, priority: priority });
 
             localStorage.setItem('events', JSON.stringify(events));
             alert('Test date added!');
+
+            // Render the Adjust Priority page immediately after adding the test
+            renderAdjustPriorityPage();
+
+            // Render the calendar page
             renderCalendarPage();
+            reload();
         });
     }
 
@@ -154,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <h1>Calendar</h1>
             <div id="calendar"></div>
             <div class="button-container">
+                <button id="adjustPriorityButton">Adjust Priority</button>
                 <button id="addTestButton">Add Test</button>
                 <button id="changeAvailabilityButton">Change Availability</button>
             </div>
@@ -167,7 +185,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create a remove button
                 var removeButton = document.createElement('span');
                 removeButton.innerHTML = 'X';
-                removeButton.style.marginLeft = '10px';
+                removeButton.style.margin
+                left = '10px';
                 removeButton.style.cursor = 'pointer';
                 removeButton.style.color = 'red';
                 removeButton.style.display = 'none';
@@ -189,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 removeButton.addEventListener('click', function() {
                     if (confirm('Are you sure you want to remove this test?')) {
                         removeEvent(info.event);
+                        reload();
                     }
                 });
             },
@@ -206,6 +226,89 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('changeAvailabilityButton').addEventListener('click', function() {
             renderAvailabilityPage();
         });
+
+        document.getElementById('adjustPriorityButton').addEventListener('click', function() {
+            renderAdjustPriorityPage();
+        });
+    }
+
+    // Function to render the Adjust Priority page
+    function renderAdjustPriorityPage() {
+        container.innerHTML = `
+            <h1>Adjust Priority</h1>
+            <div id="priorityList" class="priority-list">
+                ${events.map((event, index) => `
+                    <div class="priority-item" draggable="true" data-id="${index}">
+                        <span class="priority-number">Priority ${index + 1}:</span> ${event.title} - Date(${event.start}) - Priority: ${event.priority}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        const priorityList = document.getElementById('priorityList');
+        const priorityItems = priorityList.querySelectorAll('.priority-item');
+
+        let draggingItem = null;
+
+        priorityItems.forEach(item => {
+            item.addEventListener('dragstart', function() {
+                draggingItem = item;
+                setTimeout(() => {
+                    item.style.display = 'none';
+                }, 0);
+            });
+
+            item.addEventListener('dragend', function() {
+                setTimeout(() => {
+                    draggingItem.style.display = 'block';
+                    draggingItem = null;
+                }, 0);
+            });
+
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+
+            item.addEventListener('dragenter', function(e) {
+                e.preventDefault();
+                this.style.backgroundColor = 'lightgray';
+            });
+
+            item.addEventListener('dragleave', function() {
+                this.style.backgroundColor = '';
+            });
+
+            item.addEventListener('drop', function() {
+                const dropIndex = this.getAttribute('data-id');
+                const draggingIndex = draggingItem.getAttribute('data-id');
+
+                if (dropIndex !== draggingIndex) {
+                    const dropItemContent = this.innerHTML;
+                    this.innerHTML = draggingItem.innerHTML;
+                    draggingItem.innerHTML = dropItemContent;
+
+                    // Update the priority in the events array
+                    const temp = events[dropIndex];
+                    events[dropIndex] = events[draggingIndex];
+                    events[draggingIndex] = temp;
+
+                    // Update the priority number in the UI
+                    const dropPriorityNumber = this.querySelector('.priority-number');
+                    const draggingPriorityNumber = draggingItem.querySelector('.priority-number');
+                    const dropPriorityText = dropPriorityNumber.textContent;
+                    dropPriorityNumber.textContent = draggingPriorityNumber.textContent;
+                    draggingPriorityNumber.textContent = dropPriorityText;
+
+                    // Update local storage
+                    localStorage.setItem('events', JSON.stringify(events));
+                }
+            });
+        });
+
+        const backButton = document.createElement('button');
+        backButton.textContent = 'Back to Calendar';
+        backButton.addEventListener('click', renderCalendarPage);
+        container.appendChild(backButton);
     }
 
     // Function to load events from localStorage
