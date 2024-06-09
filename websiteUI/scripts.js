@@ -33,11 +33,18 @@ document.addEventListener('DOMContentLoaded', function() {
             removeButton.addEventListener('click', function() {
                 if (confirm('Are you sure you want to remove this test?')) {
                     removeEvent(info.event);
+                    reload();
                 }
             });
         },
         dateClick: function(info) {
             alert('Date clicked: ' + info.dateStr);
+        },
+        eventClassNames: function(info) {
+            if (info.event.title.startsWith('Study for')) {
+                return ['study-event'];
+            }
+            return [];
         }
     });
 
@@ -54,9 +61,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('adjustPriorityButton').addEventListener('click', function() {
         renderAdjustPriorityPage();
     });
-    function reload(){
+
+    function reload() {
         location.reload();
     }
+
     // Function to render the availability page
     function renderAvailabilityPage() {
         container.innerHTML = `
@@ -92,24 +101,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <button type="button" id="updateHoursButton">Update Hours</button>
             </form>
+            <button id="backButton" class="back-button">Back to Calendar</button>
         `;
 
         document.getElementById('updateHoursButton').addEventListener('click', function() {
             var form = document.getElementById('availabilityForm');
             var formData = new FormData(form);
             var availability = {};
-
+            var validInput = true;
             formData.forEach((value, key) => {
                 availability[key] = value;
+                if (value.trim() === '') {
+                    validInput = false;
+                    return;
+                }
+                if (value < 0 || isNaN(value)) {
+                    validInput = false;
+                    return;
+                }
             });
-
+            if (!validInput) {
+                alert("Please enter a valid number of hours");
+                return;
+            }
             // Save the availability data to localStorage
             localStorage.setItem('availability', JSON.stringify(availability));
             alert('Availability updated!');
             renderCalendarPage();
         });
+
+        document.getElementById('backButton').addEventListener('click', renderCalendarPage);
     }
-    
+
     // Function to render the add test page
     function renderAddTestPage() {
         container.innerHTML = `
@@ -133,26 +156,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <button type="button" id="submitTestButton">Submit</button>
             </form>
+            <button id="backButton" class="back-button">Back to Calendar</button>
         `;
 
         document.getElementById('submitTestButton').addEventListener('click', function() {
-            var form = document.getElementById('testForm');
-            var formData = new FormData(form);
-            var testDate = {};
+            var testSubject = document.getElementById('testSubject').value;
+            var testDay = document.getElementById('testDay').value;
+            var testMonth = document.getElementById('testMonth').value;
+            var testYear = document.getElementById('testYear').value;
 
-            formData.forEach((value, key) => {
-                testDate[key] = value;
-            });
+            var year = parseInt(testYear);
+            var month = parseInt(testMonth);
+            var day = parseInt(testDay);
 
-            // Save the test date and subject to localStorage
+            // Validate year, month, and day
+            var currentDate = new Date();
+            var currentYear = currentDate.getFullYear();
+            var currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+            var currentDay = currentDate.getDate();
+            var monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            if (isNaN(year) || isNaN(month) || isNaN(day)) {
+                alert('Please enter valid numbers for year, month, and day.');
+                return;
+            }
+
+            if (year < 2024 || year > 2100 || month < 1 || month > 12 || day < 1) {
+                alert('Please enter a valid date.');
+                return;
+            }
+
+            // Adjust for leap year if necessary
+            if (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) {
+                monthLengths[1] = 29; // Leap year, February has 29 days
+            }
+
+            if (day > monthLengths[month - 1]) {
+                alert('Please enter a valid day for the selected month.');
+                return;
+            }
+
             var events = loadEvents();
-            var eventDate = `${testDate['testYear']}-${String(testDate['testMonth']).padStart(2, '0')}-${String(testDate['testDay']).padStart(2, '0')}`;
-
-            // Calculate the priority for the new test
             var priority = events.length + 1;
+            var eventDate = `${testYear}-${String(testMonth).padStart(2, '0')}-${String(testDay).padStart(2, '0')}`;
 
-            events.push({ title: `Test: ${testDate['testSubject']}`, start: eventDate, priority: priority });
-
+            events.push({ title: `Test: ${testSubject}`, start: eventDate, priority: priority });
             localStorage.setItem('events', JSON.stringify(events));
             alert('Test date added!');
 
@@ -161,8 +209,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Render the calendar page
             renderCalendarPage();
+            refreshhours();
             reload();
         });
+
+        document.getElementById('backButton').addEventListener('click', renderCalendarPage);
     }
 
     // Function to render the calendar page
@@ -185,8 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create a remove button
                 var removeButton = document.createElement('span');
                 removeButton.innerHTML = 'X';
-                removeButton.style.margin
-                left = '10px';
+                removeButton.style.marginLeft = '10px';
                 removeButton.style.cursor = 'pointer';
                 removeButton.style.color = 'red';
                 removeButton.style.display = 'none';
@@ -214,6 +264,12 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             dateClick: function(info) {
                 alert('Date clicked: ' + info.dateStr);
+            },
+            eventClassNames: function(info) {
+                if (info.event.title.startsWith('Study for')) {
+                    return ['study-event'];
+                }
+                return [];
             }
         });
 
@@ -237,9 +293,9 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = `
             <h1>Adjust Priority</h1>
             <div id="priorityList" class="priority-list">
-                ${events.map((event, index) => `
+                ${events.filter(event => !event.title.startsWith('Study for')).map((event, index) => `
                     <div class="priority-item" draggable="true" data-id="${index}">
-                        <span class="priority-number">Priority ${index + 1}:</span> ${event.title} - Date(${event.start}) - Priority: ${event.priority}
+                        <span class="priority-number"></span> ${event.title} - Date(${event.start}) - Priority: ${event.priority = index + 1}
                     </div>
                 `).join('')}
             </div>
@@ -298,7 +354,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const dropPriorityText = dropPriorityNumber.textContent;
                     dropPriorityNumber.textContent = draggingPriorityNumber.textContent;
                     draggingPriorityNumber.textContent = dropPriorityText;
-
                     // Update local storage
                     localStorage.setItem('events', JSON.stringify(events));
                 }
@@ -308,6 +363,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const backButton = document.createElement('button');
         backButton.textContent = 'Back to Calendar';
         backButton.addEventListener('click', renderCalendarPage);
+        backButton.addEventListener('click', function(){
+            reload();
+        });
         container.appendChild(backButton);
     }
 
@@ -325,4 +383,84 @@ document.addEventListener('DOMContentLoaded', function() {
         event.remove();
         alert('Test removed!');
     }
+
+    // Function to sum the total number of available hours until the test day
+    function calculateTotalAvailableHours(startDay, testDay) {
+        // Initialize total available hours
+        let sum = 0;
+        // Retrieve availability data from local storage
+        const availabilityData = JSON.parse(localStorage.getItem('availability')) || {};
+        // Determine the starting day of the week as a number (0-6, where 0 is Sunday)
+        let curDay = new Date(startDay).getDay(); // Returns a number from 0 (Sunday) to 6 (Saturday)
+        // Loop from startDay to testDay
+        let currentDate = new Date(startDay);
+        let testDate = new Date(testDay);
+        while (currentDate < testDate) {
+            const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][curDay];
+            // Retrieve availability for the current day
+            const availableHours = parseInt(availabilityData[currentDay]) || 0;
+            sum += availableHours;
+            curDay = (curDay + 1) % 7; // Move to the next day, wrapping around using modulo 7
+            currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+        }
+        return sum;
+    }
+
+    function updatePriorityScoresAndDistributeHours() {
+        var events = loadEvents();
+        var availabilityData = JSON.parse(localStorage.getItem('availability')) || {};
+
+        // Filter out old study events
+        events = events.filter(event => !event.title.startsWith('Study for'));
+
+        // Calculate priority scores
+        events.forEach(event => {
+            const totalHours = calculateTotalAvailableHours(new Date(), event.start);
+            event.priorityScore = totalHours * event.priority;
+        });
+
+        // Sort by priority scores
+        events.sort((a, b) => b.priorityScore - a.priorityScore); // Sort in descending order
+
+        // Calculate sum of all priority scores
+        const sumPriorityScores = events.reduce((sum, event) => sum + event.priorityScore, 0);
+
+        // Remove tests with a priority score of 0
+        events = events.filter(event => event.priorityScore > 0);
+
+        // Normalize priority scores
+        events.forEach(event => {
+            event.priorityScore /= sumPriorityScores;
+        });
+
+        // Distribute hours based on available hours for each day
+        const currentDate = new Date();
+        for (let i = 0; i < 7; i++) {
+            const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][currentDate.getDay()];
+            const availableHours = parseInt(availabilityData[dayName]) || 0;
+
+            events.forEach(event => {
+                const studyHours = event.priorityScore * availableHours;
+                if (studyHours >= 0.33333) {
+                    const studyEvent = {
+                        title: `Study for ${event.title.split(': ')[1]} (${studyHours.toFixed(2)} hrs)`,
+                        start: new Date(currentDate),
+                        allDay: false,
+                        display: 'block',
+                        backgroundColor: 'green'
+                    };
+                    events.push(studyEvent);
+                }
+            });
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Save updated events back to localStorage
+        localStorage.setItem('events', JSON.stringify(events));
+    }
+
+    // Call the function to update priority scores and distribute hours
+    updatePriorityScoresAndDistributeHours();
+    renderCalendarPage();
 });

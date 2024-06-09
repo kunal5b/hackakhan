@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources</title>
+    <style>
+        body {
+            font-family: 'Copperplate', fantasy;
+            background-color: #000;
+            color: #d4af37;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            font-size: 100px;
+            margin-bottom: 1em;
+            text-align: center;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+            align-items: center;
+        }
+        .button-container button {
+            font-family: 'Copperplate', fantasy;
+            font-size: 2em;
+            padding: 1em 2em;
+            border: 1px solid #333;
+            background-color: lightgrey;
+            cursor: pointer;
+            width: 300px; /* Adjusted width */
+            height: 150px; /* Adjusted height */
+            text-align: center;
+            border-radius: 15px; /* Rounded corners */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .button-container button:hover {
+            background-color: darkgrey;
+        }
+        .button-container img {
+            max-height: 80px; /* Adjusted max height */
+            max-width: 200px; /* Adjusted max width */
+        }
+    </style>
+</head>
+<body>
+    <h1>Resources</h1>
+    <div class="button-container">
+        <button onclick="window.location.href='https://www.khanacademy.org/ela'">
+            <img src="khanLogo.jpeg" alt="Khan Academy">
+        </button>
+        <button onclick="window.location.href='https://schoolhouse.world/explore'">
+            <img src="schoolhouse.png" alt="Schoolhouse">
+        </button>
+    </div>
+</body>
+</html>

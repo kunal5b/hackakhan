@@ -4,7 +4,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f0f0f0;
+    background-color: #000;
     margin: 0;
     padding: 0;
 }
@@ -33,7 +33,7 @@ h1 {
 .button-container {
     display: flex;
     justify-content: center;
-    gap: 10px; /* Reduced space between the buttons */
+    gap: 8px; /* Reduced space between the buttons */
 }
 
 button {
